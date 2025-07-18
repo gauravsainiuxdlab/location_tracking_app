@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "591237109795",
+    "project_id": "location-tracking-app-d1754",
+    "storage_bucket": "location-tracking-app-d1754.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:591237109795:android:12c9590509a232179d7996",
+        "android_client_info": {
+          "package_name": "com.finesoft.location_tracking_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkxf2p9xxPUeWTT6K2a9sGfRaTOxXi3jE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

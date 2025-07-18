@@ -50,7 +50,7 @@ class HomePage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextField(
-                      onChanged: (value)=>controller.filterUsers(value),
+                      // onChanged: (value)=>controller.filterUsers(value),
                       controller: controller.searchController,
                       keyboardType: TextInputType.text,
                       decoration: const InputDecoration(
