@@ -50,7 +50,7 @@ class SharedPrefHelper {
     prefs.setInt(key, value);
   }
 
-  static Future setString(String key, String value) async {
+  static Future setString({required String key,required String value}) async {
     var prefs = await _getSharedPref();
     await prefs.setString(key, value);
   }

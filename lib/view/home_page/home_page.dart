@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:seekhelpers_assignment/view/home_page/home_page_controller.dart';
+
+import 'package:seekhelpers_assignment/view/share_location_page/share_location_page_map_view.dart';
+import 'package:seekhelpers_assignment/view/show_route_view/show_route_page.dart' show LocationTracker;
 import 'package:seekhelpers_assignment/view/user_details_page/user_details_page.dart';
 import 'package:seekhelpers_assignment/view/user_form_page/user_form_page.dart';
 
@@ -14,7 +17,13 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    
+    floatingActionButton: FloatingActionButton(
+        onPressed:(){
+           Get.to(() => ShareLocationPageMapView());
+        }
+        ,
+        child:Icon(Icons.location_on)
+    ),
       appBar: AppBar(
         title: const Text("Home Page"),
         backgroundColor: ColorConstants.primary,
@@ -46,11 +55,12 @@ class HomePage extends StatelessWidget {
             case ViewState.complete:
               return Column(
                 children: [
+                    Text("Id:${controller.uid}"),
                   const SizedBox(height: 10,),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextField(
-                      // onChanged: (value)=>controller.filterUsers(value),
+                      onChanged: (value)=>controller.filterUsers(value),
                       controller: controller.searchController,
                       keyboardType: TextInputType.text,
                       decoration: const InputDecoration(
@@ -62,28 +72,31 @@ class HomePage extends StatelessWidget {
                   ),
                   Expanded(
                     child: ListView.builder(
-                      itemCount: controller.users.length,
+                      itemCount: controller.filteredUsers.length,
                       itemBuilder: (context, index) {
-                        final user = controller.users[index];
+                        final user = controller.filteredUsers[index];
                         return Card(
                           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           elevation: 2,
                           child: ListTile(
                             onTap: (){
-                              Get.to(UserDetailPage(user: user));
+                              Get.to(LocationTracker(uid: user["uid"],));
                             },
                             leading: CircleAvatar(
                               backgroundColor: ColorConstants.primary,
-                              child: Text(user.name[0]),
+                              child: Text(user["uid"][0]),
                             ),
                             trailing: Icon(Icons.arrow_right),
-                            title: Text(user.name),
-                            subtitle: Text(user.email),
+                            title: Text(user["uid"]),
+                            subtitle: Text(controller.formatTimestamp(user["createdAt"])),
                           ),
                         );
                       },
                     ),
                   ),
+                  ElevatedButton(child: Icon(Icons.access_alarm),onPressed:(){
+                    // Get.to(() => LocationTracker());
+                  })
                 ],
               );
           }
