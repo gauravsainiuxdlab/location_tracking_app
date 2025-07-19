@@ -4,28 +4,35 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:seekhelpers_assignment/view/home_page/home_page_controller.dart';
+import 'package:seekhelpers_assignment/core/enums/view_state.dart';
+import '../../core/helper/app_logger.dart';
 
 class LocationTrackerController extends GetxController {
   final String uid;
   LocationTrackerController({required this.uid});
-ViewState state = ViewState.complete ;
-  late DatabaseReference dbRef;
 
+  ViewState state = ViewState.complete;
+  String errorMessage = "";
+
+  late DatabaseReference dbRef;
   LatLng currentPosition = const LatLng(28.6139, 77.2090); // Default: Delhi
   LatLng? targetPosition;
- String errorMessage="";
+
   final Set<Polyline> polylines = {};
   final Set<Marker> markers = {};
   GoogleMapController? mapController;
+
   StreamSubscription<Position>? _positionStream;
   StreamSubscription? _targetLocationStream;
+
+  // Flags to ensure both location and target are initialized before setting state = complete
+  bool _isLocationInitialized = false;
+  bool _isTargetLocationInitialized = false;
 
   @override
   void onInit() {
     super.onInit();
-    dbRef =
-        FirebaseDatabase.instance.ref().child("users").child(uid).child("location");
+    dbRef = FirebaseDatabase.instance.ref().child("users").child(uid).child("location");
     _startLocationUpdates();
     _listenToLatestTargetLocation();
   }
@@ -35,60 +42,66 @@ ViewState state = ViewState.complete ;
   }
 
   void _startLocationUpdates() async {
-  try {
-    state = ViewState.loading;
-    update(); // if using GetX or similar
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      permission = await Geolocator.requestPermission();
-    }
-
-    if (permission != LocationPermission.whileInUse &&
-        permission != LocationPermission.always) {
-      // Handle case where user does not grant permissions.
-      state = ViewState.complete;
+    try {
+      state = ViewState.loading;
       update();
-      return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission != LocationPermission.whileInUse && permission != LocationPermission.always) {
+        state = ViewState.error;
+        errorMessage = 'Location permission denied.';
+        update();
+        return;
+      }
+
+      const locationSettings = LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10, // update only when user moves 10 meters
+      );
+
+      _positionStream = Geolocator.getPositionStream(locationSettings: locationSettings)
+          .listen((Position position) {
+        currentPosition = LatLng(position.latitude, position.longitude);
+        _isLocationInitialized = true;
+        _checkIfReadyToComplete();
+        _updatePolylineAndMarker();
+      });
+    } catch (e, stackTrace) {
+      AppLogger.log('Error in _startLocationUpdates: $e');
+      AppLogger.log(stackTrace.toString());
+      state = ViewState.error;
+      errorMessage = 'Failed to start location updates.';
+      update();
     }
-
-    const locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 10, // update only when user moves 10 meters
-    );
-
-    _positionStream =
-        Geolocator.getPositionStream(locationSettings: locationSettings)
-            .listen((Position position) {
-      currentPosition = LatLng(position.latitude, position.longitude);
-      _updatePolylineAndMarker();
-    });
-
-    state = ViewState.complete;
-    update();
-  } catch (e, stackTrace) {
-    print('Error in startLocationUpdates: $e');
-    print(stackTrace); // optional: for deeper debug logs
-    state = ViewState.error;
-    errorMessage = 'Failed to start location updates.';
-    update();
   }
-}
-
 
   void _listenToLatestTargetLocation() {
-    _targetLocationStream =
-        dbRef.orderByKey().limitToLast(1).onChildAdded.listen((event) {
+    _targetLocationStream = dbRef.orderByKey().limitToLast(1).onChildAdded.listen((event) {
       if (event.snapshot.value == null) return;
-      final data = event.snapshot.value as Map<dynamic, dynamic>;
+      try {
+        final data = event.snapshot.value as Map<dynamic, dynamic>;
+        final double lat = data['lat'] * 1.0;
+        final double lng = data['long'] * 1.0;
 
-      final double lat = data['lat'] * 1.0;
-      final double lng = data['long'] * 1.0;
-
-      targetPosition = LatLng(lat, lng);
-      _updatePolylineAndMarker();
+        targetPosition = LatLng(lat, lng);
+        _isTargetLocationInitialized = true;
+        _checkIfReadyToComplete();
+        _updatePolylineAndMarker();
+      } catch (e) {
+        AppLogger.log("Error parsing target location: $e");
+      }
     });
+  }
+
+  void _checkIfReadyToComplete() {
+    if (_isLocationInitialized && _isTargetLocationInitialized) {
+      state = ViewState.complete;
+      update();
+    }
   }
 
   void _updatePolylineAndMarker() {

@@ -1,22 +1,21 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:seekhelpers_assignment/core/enums/view_state.dart';
 import 'package:seekhelpers_assignment/core/helper/shared_pref_helper.dart';
-import 'package:intl/intl.dart'; 
 import '../../core/helper/app_logger.dart';
-
-
-enum ViewState { loading, empty, complete, error }
 
 class HomePageController extends GetxController {
   TextEditingController searchController = TextEditingController();
   ViewState state = ViewState.loading;
-  List filteredUsers = [];
-  List<Map<String, dynamic>>  allUsers = [];
+
+  List<Map<String, dynamic>> allUsers = [];
+  List<Map<String, dynamic>> filteredUsers = [];
   String errorMessage = '';
-  String uid ='Null';
+  String uid = 'Null';
+
   @override
   void onInit() {
     super.onInit();
@@ -28,47 +27,53 @@ class HomePageController extends GetxController {
       final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
       state = ViewState.loading;
-final querySnapshot = await FirebaseFirestore.instance.collection('users').get();
+      update();
 
-// List of just document data (as Map<String, dynamic>)
- allUsers = querySnapshot.docs
-    .map((doc) => doc.data() as Map<String, dynamic>)
-    .toList();
+      // final querySnapshot = await _firestore.collection('users').get();
 
+      // allUsers = querySnapshot.docs
+      //     .map((doc) => doc.data() as Map<String, dynamic>)
+      //     .toList();
 
-      AppLogger.log("all users: $allUsers");
+      // AppLogger.log("All users: $allUsers");
 
-       uid = await SharedPrefHelper.getString("uid") ?? "Null";
-    
-     await filterUsers("");
+      uid = await SharedPrefHelper.getString("uid") ?? "Null";
+      filterUsers(""); // Initialize filteredUsers with default
+
       state = ViewState.complete;
-      AppLogger.log(" Data fetched successfully$uid");
+      AppLogger.log("Data fetched successfully: $uid");
     } catch (e) {
       state = ViewState.error;
-      AppLogger.log(" Error getting checklist: $e");
+      errorMessage = "Error getting user list.";
+      AppLogger.log("Error getting checklist: $e");
     }
     update();
   }
 
-   filterUsers(String query) {
+  void filterUsers(String query) {
     if (query.trim().isEmpty) {
-     filteredUsers = allUsers.where((user) {
-        return user["uid"]!=uid;
-      }).toList();
-      update();
+      filteredUsers = allUsers.where((user) => user["uid"] != uid).toList();
     } else {
       filteredUsers = allUsers.where((user) {
-        return user["uid"].toLowerCase().contains(query)&& user["uid"]!=uid;
+        return user["uid"].toLowerCase().contains(query.toLowerCase()) &&
+            user["uid"] != uid;
       }).toList();
-      update();
-      
     }
+
+   
     AppLogger.log("Filtered users: $filteredUsers");
+    update();
   }
 
- String formatTimestamp(Timestamp? timestamp) {
-  if (timestamp == null) return 'No date provided';
-  DateTime dateTime = timestamp.toDate();
-  return DateFormat('yyyy-MM-dd – hh:mm a').format(dateTime);
-}
+  String formatTimestamp(Timestamp? timestamp) {
+    if (timestamp == null) return 'No date provided';
+    DateTime dateTime = timestamp.toDate();
+    return DateFormat('yyyy-MM-dd – hh:mm a').format(dateTime);
+  }
+
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
+  }
 }
