@@ -10,49 +10,52 @@ import 'package:seekhelpers_assignment/core/constants/color_constants.dart';
 import 'package:seekhelpers_assignment/core/helper/shared_pref_helper.dart';
 import 'package:seekhelpers_assignment/view/home_page/home_page.dart';
 
+import 'core/helper/app_logger.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Firebase.apps.isEmpty) {
-    try {
-      await Firebase.initializeApp(
-        options:
-            Platform.isAndroid
-                ? const FirebaseOptions(
-                  apiKey: "AIzaSyCkxf2p9xxPUeWTT6K2a9sGfRaTOxXi3jE",
-                  appId: "1:591237109795:android:12c9590509a232179d7996",
-                  messagingSenderId: "591237109795",
-                  projectId: "location-tracking-app-d1754",
-                  storageBucket: "location-tracking-app-d1754.appspot.com",
-                )
-                : null,
-      );
-      print('✅ Firebase initialized successfully');
-    } catch (e) {
-      print('Firebase initialization failed: $e');
+  try {
+    await Firebase.initializeApp(
+      options: Platform.isAndroid
+          ? const FirebaseOptions(
+              apiKey: "AIzaSyCkxf2p9xxPUeWTT6K2a9sGfRaTOxXi3jE",
+              appId: "1:591237109795:android:12c9590509a232179d7996",
+              messagingSenderId: "591237109795",
+              projectId: "location-tracking-app-d1754",
+              storageBucket: "location-tracking-app-d1754.appspot.com",
+            )
+          : null,
+    );
+    AppLogger.log(' Firebase initialized successfully');
+  } catch (e) {
+    if (e.toString().contains("duplicate-app")) {
+      AppLogger.log(" Firebase already initialized. Continuing...");
+    } else {
+      AppLogger.log(' Firebase initialization failed: $e');
     }
-  } else {
-    print('ℹ️ Firebase already initialized, skipping.');
   }
+
   final bool isUid = await SharedPrefHelper.containsKey("uid");
   if (!isUid) {
     CollectionReference users = FirebaseFirestore.instance.collection('users');
 
-    // Step 1: Add a new document with a timestamp
     DocumentReference docRef = await users.add({"createdAt": DateTime.now()});
-
-    // Step 2: Get the auto-generated ID
     final String uid = docRef.id;
 
-    // Step 3: Update the same document with the UID
     await docRef.update({"uid": uid});
-
     SharedPrefHelper.setString(key: 'uid', value: uid);
+
+    AppLogger.log(' New UID created and stored: $uid');
+  } else {
+    final existingUid = await SharedPrefHelper.getString("uid");
+    AppLogger.log(' Existing UID found: $existingUid');
   }
 
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

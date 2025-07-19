@@ -52,13 +52,14 @@ class HomePage extends StatelessWidget {
               return const Center(child: Text("No users available"));
 
             case ViewState.complete:
-              return Column(
-                children: [
-                  Text("Id: ${controller.uid}"),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextField(
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10,vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Current userId: ${controller.uid}",style: TextStyle(fontWeight: FontWeight.bold),),
+                    const SizedBox(height: 10),
+                    TextField(
                       onChanged: (_) => controller.update(),
                       controller: controller.searchController,
                       keyboardType: TextInputType.text,
@@ -68,63 +69,66 @@ class HomePage extends StatelessWidget {
                         isDense: true,
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance.collection('users').snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-
-                        if (snapshot.hasError) {
-                          return Center(child: Text('Error: ${snapshot.error}'));
-                        }
-
-                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                          return const Center(child: Text("No users found"));
-                        }
-
-                        final allUsers = snapshot.data!.docs
-                            .map((doc) => doc.data() as Map<String, dynamic>)
-                            .where((user) => user["uid"] != controller.uid)
-                            .toList();
-
-                        final query = controller.searchController.text.trim().toLowerCase();
-                        final filteredUsers = query.isEmpty
-                            ? allUsers
-                            : allUsers.where((user) =>
-                                (user["uid"] as String).toLowerCase().contains(query)).toList();
-
-                        AppLogger.log("Filtered users: $filteredUsers");
-
-                        return ListView.builder(
-                          itemCount: filteredUsers.length,
-                          itemBuilder: (context, index) {
-                            final user = filteredUsers[index];
-
-                            return Card(
-                              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              elevation: 2,
-                              child: ListTile(
-                                onTap: () {
-                                  Get.to(LocationTracker(uid: user["uid"]));
-                                },
-                                leading: CircleAvatar(
-                                  backgroundColor: ColorConstants.primary,
-                                  child: Text(user["uid"][0]),
+                     const SizedBox(height: 10),
+                    Text("List of all Available users"),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance.collection('users').snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                
+                          if (snapshot.hasError) {
+                            return Center(child: Text('Error: ${snapshot.error}'));
+                          }
+                
+                          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                            return const Center(child: Text("No users found"));
+                          }
+                
+                          final allUsers = snapshot.data!.docs
+                              .map((doc) => doc.data() as Map<String, dynamic>)
+                              .where((user) => user["uid"] != controller.uid)
+                              .toList();
+                
+                          final query = controller.searchController.text.trim().toLowerCase();
+                          final filteredUsers = query.isEmpty
+                              ? allUsers
+                              : allUsers.where((user) =>
+                                  (user["uid"] as String).toLowerCase().contains(query)).toList();
+                
+                          AppLogger.log("Filtered users: $filteredUsers");
+                
+                          return ListView.builder(
+                            itemCount: filteredUsers.length,
+                            itemBuilder: (context, index) {
+                              final user = filteredUsers[index];
+                
+                              return Card(
+                                // margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                elevation: 2,
+                                child: ListTile(
+                                  onTap: () {
+                                    Get.to(LocationTracker(uid: user["uid"]));
+                                  },
+                                  leading: CircleAvatar(
+                                    backgroundColor: ColorConstants.primary,
+                                    child: Text(user["uid"][0]),
+                                  ),
+                                  trailing: const Icon(Icons.arrow_right),
+                                  title: Text(user["uid"]),
+                                  subtitle: Text(controller.formatTimestamp(user["createdAt"])),
                                 ),
-                                trailing: const Icon(Icons.arrow_right),
-                                title: Text(user["uid"]),
-                                subtitle: Text(controller.formatTimestamp(user["createdAt"])),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
           }
         },

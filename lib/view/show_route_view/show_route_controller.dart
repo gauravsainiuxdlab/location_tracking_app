@@ -25,21 +25,86 @@ class LocationTrackerController extends GetxController {
   StreamSubscription<Position>? _positionStream;
   StreamSubscription? _targetLocationStream;
 
-  // Flags to ensure both location and target are initialized before setting state = complete
   bool _isLocationInitialized = false;
   bool _isTargetLocationInitialized = false;
 
   @override
   void onInit() {
     super.onInit();
-    dbRef = FirebaseDatabase.instance.ref().child("users").child(uid).child("location");
-    _startLocationUpdates();
-    _listenToLatestTargetLocation();
+    _validateAndStart();
   }
 
   void onMapCreated(GoogleMapController controller) {
     mapController = controller;
   }
+
+  Future<void> _validateAndStart() async {
+    final exists = await checkIfLocationKeyExists(uid);
+    if (!exists) return;
+
+    dbRef = FirebaseDatabase.instance.ref().child("users").child(uid).child("location");
+    _startLocationUpdates();
+    _listenToLatestTargetLocation();
+  }
+Future<bool> checkIfLocationKeyExists(String uid) async {
+  final checkRef = FirebaseDatabase.instance.ref().child("users").child(uid);
+
+  try {
+    final snapshot = await checkRef.child("location").get();
+
+    if (!snapshot.exists) {
+      AppLogger.log(" Location key missing.");
+
+      // Show snackbar
+      Get.snackbar(
+        "Location Not Found",
+        "Location data is missing for this user.",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2), // Short duration
+      );
+
+      // Wait for snackbar to show and then pop screen
+      Future.delayed(const Duration(milliseconds: 2200), () {
+        if (Get.isDialogOpen ?? false) {
+          AppLogger.log("Closing dialog...");
+          Get.back(); // Close dialog if open
+        }
+
+        if (Get.routing.current != '/') {
+          AppLogger.log("Closing screen...");
+          Get.back(); // Close current screen
+        }
+      });
+
+      return false;
+    }
+
+    AppLogger.log("Location key exists.");
+    return true;
+  } catch (e) {
+    AppLogger.log("Error while checking location key: $e");
+
+    Get.snackbar(
+      "Error",
+      "Failed to check location data.",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 2),
+    );
+
+    // Delay before popping
+    Future.delayed(const Duration(milliseconds: 2200), () {
+      if (Get.isDialogOpen ?? false) Get.back();
+      if (Get.routing.current != '/') Get.back();
+    });
+
+    return false;
+  }
+}
+
 
   void _startLocationUpdates() async {
     try {
@@ -60,7 +125,7 @@ class LocationTrackerController extends GetxController {
 
       const locationSettings = LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 10, // update only when user moves 10 meters
+        distanceFilter: 10,
       );
 
       _positionStream = Geolocator.getPositionStream(locationSettings: locationSettings)
