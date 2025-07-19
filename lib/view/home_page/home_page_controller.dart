@@ -6,8 +6,7 @@ import 'package:get/get.dart';
 import 'package:seekhelpers_assignment/core/helper/shared_pref_helper.dart';
 import 'package:intl/intl.dart'; 
 import '../../core/helper/app_logger.dart';
-import '../../core/repository/app_repository.dart';
-import '../../models/user_model.dart';
+
 
 enum ViewState { loading, empty, complete, error }
 
