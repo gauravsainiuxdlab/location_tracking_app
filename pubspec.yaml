@@ -53,6 +53,7 @@ dependencies:
   geolocator: ^11.0.0
   share_plus: ^10.0.1
   intl: ^0.20.2
+  easy_loader: ^2.0.0
 
 dev_dependencies:
   flutter_test:

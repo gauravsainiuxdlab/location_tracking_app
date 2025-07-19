@@ -113,6 +113,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
+  easy_loader:
+    dependency: "direct main"
+    description:
+      name: easy_loader
+      sha256: e1f848ab808e1a02a6a363ea825e3ac0b932594c6c8224488cad6590232d3885
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
   fake_async:
     dependency: transitive
     description:

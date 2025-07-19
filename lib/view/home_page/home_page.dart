@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:seekhelpers_assignment/view/home_page/home_page_controller.dart';
-
-import 'package:seekhelpers_assignment/view/share_location_page/share_location_page_map_view.dart';
+import 'package:seekhelpers_assignment/view/share_location_page/share_location_page_view.dart';
 import 'package:seekhelpers_assignment/view/show_route_view/show_route_page.dart' show LocationTracker;
 
 import '../../core/constants/color_constants.dart';
@@ -18,6 +17,7 @@ class HomePage extends StatelessWidget {
     floatingActionButton: FloatingActionButton(
         onPressed:(){
            Get.to(() => ShareLocationPageMapView());
+
         }
         ,
         child:Icon(Icons.location_on)
