@@ -4,8 +4,6 @@ import 'package:seekhelpers_assignment/view/home_page/home_page_controller.dart'
 
 import 'package:seekhelpers_assignment/view/share_location_page/share_location_page_map_view.dart';
 import 'package:seekhelpers_assignment/view/show_route_view/show_route_page.dart' show LocationTracker;
-import 'package:seekhelpers_assignment/view/user_details_page/user_details_page.dart';
-import 'package:seekhelpers_assignment/view/user_form_page/user_form_page.dart';
 
 import '../../core/constants/color_constants.dart';
 
@@ -94,9 +92,7 @@ class HomePage extends StatelessWidget {
                       },
                     ),
                   ),
-                  ElevatedButton(child: Icon(Icons.access_alarm),onPressed:(){
-                    // Get.to(() => LocationTracker());
-                  })
+              
                 ],
               );
           }

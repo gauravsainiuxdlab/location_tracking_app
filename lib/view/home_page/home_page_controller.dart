@@ -40,20 +40,7 @@ final querySnapshot = await FirebaseFirestore.instance.collection('users').get()
       AppLogger.log("all users: $allUsers");
 
        uid = await SharedPrefHelper.getString("uid") ?? "Null";
-      //       final ref = FirebaseDatabase.instance.ref();
-
-      //       final userLocationRef = ref
-      //           .child('users')
-      //           .child(uid)
-      //           .child('location'); // A new 'locations' child
-
-      // // Now, use .push() to create a new unique entry under 'locations'
-      //       await userLocationRef.push().set({
-      //         // .push() generates a unique key, then .set() adds the data
-      //         "lat": 6366.2727,
-      //         "long": 672.3333,
-      //         "timestamp": ServerValue.timestamp
-      //       });
+    
      await filterUsers("");
       state = ViewState.complete;
       AppLogger.log(" Data fetched successfully$uid");
@@ -66,8 +53,9 @@ final querySnapshot = await FirebaseFirestore.instance.collection('users').get()
 
    filterUsers(String query) {
     if (query.trim().isEmpty) {
-      filteredUsers=allUsers;
-    
+     filteredUsers = allUsers.where((user) {
+        return user["uid"]!=uid;
+      }).toList();
       update();
     } else {
       filteredUsers = allUsers.where((user) {
